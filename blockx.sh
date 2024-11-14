@@ -55,7 +55,6 @@ flush_dns() {
     if [[ "$OSTYPE" == "darwin"* ]]; then
         killall -HUP mDNSResponder
         # Open Chrome's DNS settings on macOS
-        open -a "Google Chrome" chrome://net-internals/#dns
         echo "Flushed DNS cache"
     elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
         systemd-resolve --flush-caches || true
@@ -67,6 +66,14 @@ flush_dns() {
     fi
 }
 
+# Function to show usage
+show_usage() {
+    echo "Usage:"
+    echo "  $0                     # Block sites"
+    echo "  $0 --temp-unblock [minutes]  # Temporarily unblock sites for specified minutes (default: 10)"
+    exit 1
+}
+
 # Check command line arguments
 if [ "$1" == "--temp-unblock" ]; then
     # Check if backup exists
@@ -75,20 +82,30 @@ if [ "$1" == "--temp-unblock" ]; then
         exit 1
     fi
     
-    echo "Temporarily unblocking sites for 10 minutes..."
+    # Get duration in minutes, default to 10 if not specified
+    DURATION="${2:-10}"
+    
+    # Validate that duration is a positive number
+    if ! [[ "$DURATION" =~ ^[0-9]+$ ]] || [ "$DURATION" -eq 0 ]; then
+        echo "Error: Duration must be a positive number of minutes"
+        show_usage
+    fi
+    
+    echo "Temporarily unblocking sites for $DURATION minutes..."
     unblock_sites
     flush_dns
     
-    # Wait 10 minutes and then reblock
+    # Wait specified minutes and then reblock
     (
-        sleep 600  # 10 minutes
+        sleep $(($DURATION * 60))  # Convert minutes to seconds
         echo "Reblocking sites..."
         block_sites
         flush_dns
         echo "Sites have been reblocked"
+        open -a "Google Chrome" chrome://net-internals/#dns
     ) &
     
-    echo "Sites will be automatically reblocked in 10 minutes"
+    echo "Sites will be automatically reblocked in $DURATION minutes"
     exit 0
 fi
 
