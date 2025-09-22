@@ -91,7 +91,26 @@ if [ "$1" == "--temp-unblock" ]; then
         show_usage
     fi
     
-    echo "Temporarily unblocking sites for $DURATION minutes..."
+    echo ""
+    echo "🌱 Before unblocking, let's take a moment to breathe..."
+    echo "Take deep breaths and center yourself for $((DURATION * 3)) seconds"
+    echo ""
+
+    # Breathing animation proportional to unblock duration
+    for ((i=$((DURATION * 3)); i>=1; i--)); do
+        if [ $((i % 4)) -eq 0 ]; then
+            echo -ne "\r🫁 Breathe in... ($i seconds remaining)   "
+        elif [ $((i % 2)) -eq 0 ]; then
+            echo -ne "\r💨 Breathe out... ($i seconds remaining)  "
+        else
+            echo -ne "\r🧘 Center yourself... ($i seconds remaining) "
+        fi
+        sleep 1
+    done
+
+    echo -ne "\r✨ Ready! Temporarily unblocking sites for $DURATION minutes...\n"
+    echo ""
+
     unblock_sites
     flush_dns
     
